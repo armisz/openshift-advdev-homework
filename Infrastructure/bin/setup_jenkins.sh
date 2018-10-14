@@ -32,7 +32,7 @@ echo "Setting up Jenkins in project ${GUID}-jenkins from Git Repo ${REPO} for Cl
 oc new-app jenkins-persistent --param ENABLE_OAUTH=true --param MEMORY_LIMIT=2Gi --param VOLUME_CAPACITY=4Gi -n $GUID-jenkins #--param DISABLE_ADMINISTRATIVE_MONITORS=true
 
 # Build the custom Maven slave pod to include Skopeo
-oc new-build --name="jenkins-slave-appdev" --dockerfile="$(< Infrastructure/Dockerfile)" -n $GUID-jenkins
+oc new-build --name="jenkins-slave-appdev" --dockerfile="$(< Infrastructure/templates/Dockerfile)" -n $GUID-jenkins
 
 # Build configurations for the pipelines in the source code project
 oc create -f Infrastructure/templates/mlbparks-pipeline.yaml -n $GUID-jenkins
