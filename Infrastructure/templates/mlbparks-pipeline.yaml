@@ -1,0 +1,19 @@
+echo "apiVersion: v1
+items:
+- kind: "BuildConfig"
+  apiVersion: "v1"
+  metadata:
+    name: "mlbparks-pipeline"
+  spec:
+    source:
+      type: "Git"
+      git:
+        uri: "https://github.com/armisz/openshift-advdev-homework"
+        ref: "master"
+      contextDir: MLBParks
+    strategy:
+      type: "JenkinsPipeline"
+      jenkinsPipelineStrategy:
+        jenkinsfilePath: Jenkinsfile
+kind: List
+metadata: []

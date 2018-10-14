@@ -27,3 +27,19 @@ echo "Setting up Jenkins in project ${GUID}-jenkins from Git Repo ${REPO} for Cl
 # * CLUSTER: the base url of the cluster used (e.g. na39.openshift.opentlc.com)
 
 # To be Implemented by Student
+
+# Set up a persistent Jenkins instance with 2 GB of memory and a persistent volume claim of 4 GB.
+oc new-app jenkins-persistent --param ENABLE_OAUTH=true --param MEMORY_LIMIT=2Gi --param VOLUME_CAPACITY=4Gi -n $GUID-jenkins #--param DISABLE_ADMINISTRATIVE_MONITORS=true
+
+# Build the custom Maven slave pod to include Skopeo
+oc new-build --name="jenkins-slave-appdev" --dockerfile="$(< Infrastructure/Dockerfile)" -n $GUID-jenkins
+
+# Build configurations for the pipelines in the source code project
+oc create -f Infrastructure/templates/mlbparks-pipeline.yaml -n $GUID-jenkins
+oc create -f Infrastructure/templates/nationalparks-pipeline.yaml -n $GUID-jenkins
+oc create -f Infrastructure/templates/parksmap-pipeline.yaml -n $GUID-jenkins
+
+# Pass GUID and CLUSTER to all pipelines
+oc set env bc/mlbparks-pipeline GUID=${GUID} CLUSTER=${CLUSTER} -n ${GUID}-jenkins
+oc set env bc/nationalparks-pipeline GUID=${GUID} CLUSTER=${CLUSTER} -n ${GUID}-jenkins
+oc set env bc/parksmap-pipeline GUID=${GUID} CLUSTER=${CLUSTER} -n ${GUID}-jenkins
