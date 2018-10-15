@@ -28,18 +28,25 @@ echo "Setting up Jenkins in project ${GUID}-jenkins from Git Repo ${REPO} for Cl
 
 # To be Implemented by Student
 
+oc project ${GUID}-jenkins
+
 # Set up a persistent Jenkins instance with 2 GB of memory and a persistent volume claim of 4 GB.
-oc new-app jenkins-persistent --param ENABLE_OAUTH=true --param MEMORY_LIMIT=2Gi --param VOLUME_CAPACITY=4Gi -n $GUID-jenkins #--param DISABLE_ADMINISTRATIVE_MONITORS=true
+oc new-app jenkins-persistent --param ENABLE_OAUTH=true --param MEMORY_LIMIT=2Gi --param VOLUME_CAPACITY=4Gi
+
+# Allow the Maven slave pod to consume 2Gi of memory when building a JEE application
+oc rollout pause dc jenkins
+oc set resources dc jenkins --limits=memory=2Gi,cpu=2 --requests=memory=2Gi,cpu=1
+oc rollout resume dc jenkins
 
 # Build the custom Maven slave pod to include Skopeo
-oc new-build --name="jenkins-slave-appdev" --dockerfile="$(< Infrastructure/templates/Dockerfile)" -n $GUID-jenkins
+oc new-build --name="jenkins-slave-appdev" --dockerfile="$(< Infrastructure/templates/jenkins-slave-Dockerfile)"
 
 # Build configurations for the pipelines in the source code project
-oc create -f Infrastructure/templates/mlbparks-pipeline.yaml -n $GUID-jenkins
-oc create -f Infrastructure/templates/nationalparks-pipeline.yaml -n $GUID-jenkins
-oc create -f Infrastructure/templates/parksmap-pipeline.yaml -n $GUID-jenkins
+oc create -f Infrastructure/templates/mlbparks-pipeline.yaml
+oc create -f Infrastructure/templates/nationalparks-pipeline.yaml
+oc create -f Infrastructure/templates/parksmap-pipeline.yaml
 
 # Pass GUID and CLUSTER to all pipelines
-oc set env bc/mlbparks-pipeline GUID=${GUID} CLUSTER=${CLUSTER} -n ${GUID}-jenkins
-oc set env bc/nationalparks-pipeline GUID=${GUID} CLUSTER=${CLUSTER} -n ${GUID}-jenkins
-oc set env bc/parksmap-pipeline GUID=${GUID} CLUSTER=${CLUSTER} -n ${GUID}-jenkins
+oc set env bc/mlbparks-pipeline GUID=${GUID} CLUSTER=${CLUSTER}
+oc set env bc/nationalparks-pipeline GUID=${GUID} CLUSTER=${CLUSTER}
+oc set env bc/parksmap-pipeline GUID=${GUID} CLUSTER=${CLUSTER}
